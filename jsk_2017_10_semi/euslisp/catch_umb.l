@@ -9,6 +9,10 @@
 
 (send *ri* :angle-vector #f(0 0 0 0 0 0 0 0 0 0))
 (objects (list *fetch* umb))
+
+;only move after merged "enable to run go-grasp on kinematic simulation mode "
+(send *ri* :stop-grasp)
+
 (send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(900 0 900)))
 (send *ri* :angle-vector (send *fetch* :angle-vector) 3000)
 (send *ri* :wait-interpolation)
@@ -18,7 +22,7 @@
 (send *ri* :wait-interpolation)
 
 (send *fetch* :rarm :end-coords :assoc umb)
-;(send *ri* :start-grasp)
+(send *ri* :start-grasp)
 
 (send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(1000 0 1200)))
 (send *ri* :angle-vector (send *fetch* :angle-vector) 1000)
@@ -31,3 +35,5 @@
     (send *ri* :angle-vector (send *fetch* :angle-vector) 1000)
     (send *ri* :wait-interpolation)
 )
+
+(send *ri* :stop-grasp)
