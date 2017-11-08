@@ -18,17 +18,19 @@
 (send *ri* :wait-interpolation)
 
 (send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(1000 0 900)))
-(send *ri* :angle-vector (send *fetch* :angle-vector) 1000)
+(send *ri* :angle-vector (send *fetch* :angle-vector) 3000)
 (send *ri* :wait-interpolation)
+
+(unix::sleep 2)
 
 (send *fetch* :rarm :end-coords :assoc umb)
 (send *ri* :start-grasp)
 
 (send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(1000 0 1200)))
-(send *ri* :angle-vector (send *fetch* :angle-vector) 1000)
+(send *ri* :angle-vector (send *fetch* :angle-vector) 3000)
 (send *ri* :wait-interpolation)
 
-;(unix::usleep 1000)
+(unix::sleep 1)
 
 (dotimes (i 10)
     (send *fetch* :rarm :inverse-kinematics (make-coords :pos (float-vector 900 0 (- 1200 (* i 50)))))
