@@ -11,7 +11,7 @@
 (objects (list *pr2* umb))
 
 ;only move after merged "enable to run go-grasp on kinematic simulation mode "
-(send *ri* :stop-grasp)
+(send *ri* :stop-grasp :rarm)
 
 (send *pr2* :rarm :inverse-kinematics (make-coords :pos #f(600 0 900)))
 (send *ri* :angle-vector (send *pr2* :angle-vector) 5000)
@@ -24,7 +24,7 @@
 (unix::sleep 2)
 
 (send *pr2* :rarm :end-coords :assoc umb)
-(send *ri* :start-grasp)
+(send *ri* :start-grasp :rarm)
 (send *ri* :wait-interpolation)
 
 (do-until-key ())
@@ -43,7 +43,7 @@
 (send *ri* :angle-vector (send *pr2* :angle-vector) 10000)
 (send *ri* :wait-interpolation)
 
-(send *ri* :stop-grasp)
+(send *ri* :stop-grasp :rarm)
 (send *pr2* :rarm :end-coords :dissoc umb)
 
 (unix:sleep 1)
