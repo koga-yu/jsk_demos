@@ -120,6 +120,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_executable(umb_detector src/umb_detector.cpp)
+target_link_libraries(umb_detector ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/jsk_2017_10_semi.cpp
