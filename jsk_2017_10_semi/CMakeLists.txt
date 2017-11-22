@@ -8,6 +8,8 @@ project(jsk_2017_10_semi)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_transport
   fetcheus
   jsk_maps
   pr2eus
