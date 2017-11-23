@@ -70,7 +70,8 @@ private:
 public:
     UmbDetector(ros::NodeHandle nh = ros::NodeHandle()) : it_(nh), node_handle(ros::NodeHandle())
     {
-        img_sub_ = it_.subscribe("/head_camera/rgb/image_raw", 3, &UmbDetector::imageCallBack, this);
+        //img_sub_ = it_.subscribe("/head_camera/rgb/image_raw", 3, &UmbDetector::imageCallBack, this);
+        img_sub_ = it_.subscribe("image", 3, &UmbDetector::imageCallBack, this);
         cv::namedWindow("Fast", 1);
 
         chatter_pub = node_handle.advertise<std_msgs::String>("chatter", 1000);

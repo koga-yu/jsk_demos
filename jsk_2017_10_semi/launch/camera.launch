@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="uvc_camera" type="uvc_camera_node" name="camera_driver" />
+    <node pkg="image_proc" type="image_proc" name="image_proc" >
+        <remap from="image" to="image_raw" />
+    </node>
+    <node pkg = "image_view" type="image_view" name="image_view" >
+        <remap from="image" to="image_rect_color" />
+    </node>
+</launch>
