@@ -3,6 +3,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/features2d/features2d.hpp"
+#include "opencv2/opencv.hpp"
 
 #include "std_msgs/String.h"
 #include <sstream>
@@ -15,55 +16,34 @@ private:
         ROS_INFO("Received image");
         cv::Mat in_img = cv_bridge::toCvCopy(msg, msg->encoding)->image;
 
-        cv::Mat fast_img = in_img.clone();
-        //int threshold = 10;
-        //bool nonmax = true;
-        //std::vector<cv::KeyPoint> keypoints;
-        //cv::FAST(in_img, keypoints, threshold, nonmax);
-        //std::vector<cv::KeyPoint>::iterator it_kp = keypoints.begin();
-        //for(; it_kp != keypoints.end(); ++it_kp) {
-        //    cv::circle(fast_img, cv::Point(it_kp->pt.x, it_kp->pt.y), 1,
-        //        cv::Scalar(50, 0, 255), -1);
-        //    cv::circle(fast_img, cv::Point(it_kp->pt.x, it_kp->pt.y), 8,
-        //        cv::Scalar(50, 0, 255));
-        //}
-        const int col_r[3] = {255, 0, 0};
-        const int col_g[3] = {0, 255, 0};
-        const int col_b[3] = {0, 0, 255};
-        const int diff_threshold_r = 40000;
-        const int diff_threshold_g = 40000;
-        const int diff_threshold_b = 40000;
+        cv::Mat grayImage, binImage;
+        cv::cvtColor(in_img, grayImage, CV_BGR2GRAY);
+        cv::threshold(grayImage, binImage, 128.0, 255.0, CV_THRESH_OTSU);
+        cv::imshow("bin", binImage);
 
-        for (int y = 0; y < fast_img.rows; ++y) {
-            for (int x = 0; x < fast_img.cols; ++x) {
-                //0B 1G 2R
-                int tmp_r = fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 2];
-                int tmp_g = fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 1];
-                int tmp_b = fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 0];
+        // 輪郭抽出
+        std::vector<std::vector<cv::Point> > contours;
+        cv::findContours(binImage, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+        // 検出された輪郭線の描画
+        for (std::vector<std::vector<cv::Point> >::iterator contour = contours.begin(); contour != contours.end(); contour++) {
+            cv::polylines(in_img, *contour, true, cv::Scalar(0, 255, 0), 2);
+        }
 
-                bool is_found = false;
-                if (this->calcDist(col_g, tmp_r, tmp_g, tmp_b) < diff_threshold_g) {
-                    is_found = true;
-                }
-                if (this->calcDist(col_r, tmp_r, tmp_g, tmp_b) < diff_threshold_r) {
-                    is_found = true;
-                }
-                if (this->calcDist(col_b, tmp_r, tmp_g, tmp_b) < diff_threshold_b) {
-                    this->publishDetectBlue();
-                    is_found = true;
-                }
-                if (not is_found) {
-                    fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 0] = 0;
-                    fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 1] = 0;
-                    fast_img.data[y * fast_img.step + x * fast_img.elemSize() + 2] = 0;
-                }
-                // 画像のチャネル数分だけループ。白黒の場合は1回、カラーの場合は3回　　　　　
-                //for(int c = 0; c < fast_img.channels(); ++c){
-                //	cout << src.data[ y * fast_img.step + x * fast_img.elemSize() + c ] << endl;
-                //}
+        // 輪郭が四角形かの判定
+        for (std::vector<std::vector<cv::Point> >::iterator contour = contours.begin(); contour != contours.end(); contour++) {
+            // 輪郭を直線近似
+            std::vector<cv::Point> approx;
+            cv::approxPolyDP(cv::Mat(*contour), approx, 50.0, true);
+            // 近似が4線かつ面積が一定以上なら四角形
+            double area = cv::contourArea(approx);
+            if (approx.size() == 4 && area > 1000.0) {
+                cv::polylines(in_img, approx, true, cv::Scalar(255, 0, 0), 2);
+                std::stringstream sst;
+                sst << "area : " << area;
+                cv::putText(in_img, sst.str(), approx[0], CV_FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 128, 0));
             }
         }
-        cv::imshow("Fast", fast_img);
+        cv::imshow("in_img", in_img);
         cv::waitKey(1);
     }
 
@@ -102,9 +82,7 @@ private:
 
 int main(int argc, char** argv)
 {
-	std::cout << "before ros::inti" << std::endl;
     ros::init(argc, argv, "umb_detector_node");
-	std::cout << "before initialize umbdetector" << std::endl;
     UmbDetector mcp;
     ros::spin();
 }
