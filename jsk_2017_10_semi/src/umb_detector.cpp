@@ -6,6 +6,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "std_msgs/String.h"
+#include "jsk_2017_10_semi/umb_pos.h"
 #include <sstream>
 
 class UmbDetector
@@ -62,13 +63,12 @@ public:
         return (col[0] - r) * (col[0] - r) + (col[1] - g) * (col[1] - g) + (col[2] - b) * (col[2] - b);
     }
 
-    void publishDetectBlue()
+    void publishDetectUmb(float x, float y, float z)
     {
-        std_msgs::String msg;
-        std::stringstream ss;
-        ss << "blue";
-        msg.data = ss.str();
-        ROS_INFO("%s", msg.data.c_str());
+        jsk_2017_10_semi::umb_pos::ConstPtr& msg;
+        msg->x = x;
+        msg->y = y;
+        msg->z = z;
 
         chatter_pub.publish(msg);
     }
