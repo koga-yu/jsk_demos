@@ -42,6 +42,8 @@ private:
                 std::stringstream sst;
                 sst << "area : " << area;
                 cv::putText(in_img, sst.str(), approx[0], CV_FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 128, 0));
+
+				this->publishDetectUmb(approx.at(0).x, approx.at(0).y, 0);
             }
         }
         cv::imshow("in_img", in_img);
@@ -55,7 +57,7 @@ public:
         img_sub_ = it_.subscribe("image", 3, &UmbDetector::imageCallBack, this);
         cv::namedWindow("Fast", 1);
 
-        chatter_pub = node_handle.advertise<std_msgs::String>("chatter", 1000);
+        chatter_pub = node_handle.advertise<jsk_2017_10_semi::umb_pos>("umb_pos", 1000);
     }
 
     int calcDist(const int col[3], int r, int g, int b)
@@ -65,10 +67,10 @@ public:
 
     void publishDetectUmb(float x, float y, float z)
     {
-        jsk_2017_10_semi::umb_pos::ConstPtr& msg;
-        msg->x = x;
-        msg->y = y;
-        msg->z = z;
+        jsk_2017_10_semi::umb_pos msg;
+        msg.x = x;
+        msg.y = y;
+        msg.z = z;
 
         chatter_pub.publish(msg);
     }
