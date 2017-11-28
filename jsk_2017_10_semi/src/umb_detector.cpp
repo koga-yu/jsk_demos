@@ -37,13 +37,17 @@ private:
             cv::approxPolyDP(cv::Mat(*contour), approx, 50.0, true);
             // 近似が4線かつ面積が一定以上なら四角形
             double area = cv::contourArea(approx);
+            isUmbrella(approx);
+            cv::Rect rect = cv::boundingRect(approx);
+            cv::rectangle(in_img, cvPoint(rect.x, rect.y),
+                cvPoint(rect.x + rect.width, rect.y + rect.height), CV_RGB(255, 0, 0), 2);
             if (approx.size() == 4 && area > 1000.0) {
                 cv::polylines(in_img, approx, true, cv::Scalar(255, 0, 0), 2);
                 std::stringstream sst;
                 sst << "area : " << area;
                 cv::putText(in_img, sst.str(), approx[0], CV_FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 128, 0));
 
-				this->publishDetectUmb(approx.at(0).x, approx.at(0).y, 0);
+                this->publishDetectUmb(approx.at(0).x, approx.at(0).y, 0);
             }
         }
         cv::imshow("in_img", in_img);
@@ -63,6 +67,28 @@ public:
     int calcDist(const int col[3], int r, int g, int b)
     {
         return (col[0] - r) * (col[0] - r) + (col[1] - g) * (col[1] - g) + (col[2] - b) * (col[2] - b);
+    }
+
+    bool isUmbrella(const std::vector<cv::Point> approx)
+    {
+        float y_max = approx.at(0).y;
+        float y_min = approx.at(0).y;
+        float x_max = approx.at(0).x;
+        float x_min = approx.at(0).x;
+        for (int i = 0; i < approx.size(); i++) {
+            if (approx.at(i).x > x_max) {
+                x_max = approx.at(i).x;
+            }
+            if (approx.at(i).x < x_min) {
+                x_min = approx.at(i).x;
+            }
+            if (approx.at(i).x > y_max) {
+                y_max = approx.at(i).y;
+            }
+            if (approx.at(i).y < y_min) {
+                y_min = approx.at(i).y;
+            }
+        }
     }
 
     void publishDetectUmb(float x, float y, float z)
