@@ -37,18 +37,10 @@ private:
             cv::approxPolyDP(cv::Mat(*contour), approx, 50.0, true);
             // 近似が4線かつ面積が一定以上なら四角形
             double area = cv::contourArea(approx);
-            isUmbrella(approx);
             cv::Rect rect = cv::boundingRect(approx);
             cv::rectangle(in_img, cvPoint(rect.x, rect.y),
                 cvPoint(rect.x + rect.width, rect.y + rect.height), CV_RGB(255, 0, 0), 2);
-            if (approx.size() == 4 && area > 1000.0) {
-                cv::polylines(in_img, approx, true, cv::Scalar(255, 0, 0), 2);
-                std::stringstream sst;
-                sst << "area : " << area;
-                cv::putText(in_img, sst.str(), approx[0], CV_FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 128, 0));
-
-                this->publishDetectUmb(approx.at(0).x, approx.at(0).y, 0);
-            }
+            this->detectUmbrella(rect);
         }
         cv::imshow("in_img", in_img);
         cv::waitKey(1);
@@ -69,29 +61,22 @@ public:
         return (col[0] - r) * (col[0] - r) + (col[1] - g) * (col[1] - g) + (col[2] - b) * (col[2] - b);
     }
 
-    bool isUmbrella(const std::vector<cv::Point> approx)
+    void detectUmbrella(cv::Rect rect) const
     {
-        float y_max = approx.at(0).y;
-        float y_min = approx.at(0).y;
-        float x_max = approx.at(0).x;
-        float x_min = approx.at(0).x;
-        for (int i = 0; i < approx.size(); i++) {
-            if (approx.at(i).x > x_max) {
-                x_max = approx.at(i).x;
-            }
-            if (approx.at(i).x < x_min) {
-                x_min = approx.at(i).x;
-            }
-            if (approx.at(i).x > y_max) {
-                y_max = approx.at(i).y;
-            }
-            if (approx.at(i).y < y_min) {
-                y_min = approx.at(i).y;
-            }
+        if (rect.width / rect.height > 0.1 and rect.width / rect.height < 0.2) {
+            double screen_x = rect.x + rect.width / 2.0;
+            double screen_y = rect.y + rect.height * 0.9;
+
+            double ratio = umb_length / rect.height;
+            double handle_x = ideal_dist * ideal_height / rect.height;
+            double handle_y = screen_x * ratio;
+            double handle_z = screen_y * ratio;
+
+            this->publishDetectUmb(handle_x, handle_y, handle_z);
         }
     }
 
-    void publishDetectUmb(float x, float y, float z)
+    void publishDetectUmb(float x, float y, float z) const
     {
         jsk_2017_10_semi::umb_pos msg;
         msg.x = x;
@@ -106,6 +91,10 @@ private:
     image_transport::ImageTransport it_;
     ros::NodeHandle node_handle;
     ros::Publisher chatter_pub;
+
+    double umb_length = 800.0;
+    double ideal_height = 20.0;
+    double ideal_dist = 1000.0;
 };
 
 int main(int argc, char** argv)
