@@ -34,8 +34,10 @@ private:
         roi_rect.y = max_pt.y;
 
         if (maxVal > match_coeff_thresh) {
+            //add rectangle RED
             cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
         } else {
+            //add rectangle BLUE
             cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
         }
 
@@ -60,26 +62,6 @@ public:
         if (tmp_img.empty()){
             std::cout << "couldn't read the image. ./../picture/umb_handle.png" << std::endl;
             return;
-        }
-    }
-
-    int calcDist(const int col[3], int r, int g, int b)
-    {
-        return (col[0] - r) * (col[0] - r) + (col[1] - g) * (col[1] - g) + (col[2] - b) * (col[2] - b);
-    }
-
-    void detectUmbrella(cv::Rect rect) const
-    {
-        if (rect.width / rect.height > 0.1 and rect.width / rect.height < 0.2) {
-            double screen_x = rect.x + rect.width / 2.0;
-            double screen_y = rect.y + rect.height * 0.9;
-
-            double ratio = umb_length / rect.height;
-            double handle_x = ideal_dist * ideal_height / rect.height;
-            double handle_y = screen_x * ratio;
-            double handle_z = screen_y * ratio;
-
-            this->publishDetectUmb(handle_x, handle_y, handle_z);
         }
     }
 
