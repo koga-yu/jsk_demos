@@ -17,12 +17,12 @@ private:
         ROS_INFO("Received image");
         cv::Mat in_img = cv_bridge::toCvCopy(msg, msg->encoding)->image;
 
-        cv::Mat grayImage;
-        cv::cvtColor(in_img, grayImage, CV_BGR2GRAY);
+        cv::Mat gray_img;
+        cv::cvtColor(in_img, gray_img, CV_BGR2GRAY);
 
-        cv::Mat result_img;// = new cv::Mat(in_img.Height - tmp_img.Height + 1, in_img.Width - tmp_img.Width + 1, MatrixType.F32C1);
+        cv::Mat result_img;
 
-        cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_SQDIFF);
+        cv::matchTemplate(gray_img, tmp_img, result_img, CV_TM_CCORR_NORMED);
 
         cv::Rect roi_rect(0, 0, tmp_img.cols, tmp_img.rows);
         cv::Point max_pt;
@@ -30,40 +30,10 @@ private:
         cv::minMaxLoc(result_img, NULL, &maxVal, NULL, &max_pt);
         roi_rect.x = max_pt.x;
         roi_rect.y = max_pt.y;
-        cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+        cv::rectangle(gray_img, roi_rect, cv::Scalar(0, 0, 255, 3));
 
-        cv::imshow("in_img", in_img);
+        cv::imshow("in_img", gray_img);
         cv::waitKey(1);
-
-        /*
-        cv::Mat grayImage, binImage;
-        cv::cvtColor(in_img, grayImage, CV_BGR2GRAY);
-        cv::threshold(grayImage, binImage, 128.0, 255.0, CV_THRESH_OTSU);
-        cv::imshow("bin", binImage);
-
-        // 輪郭抽出
-        std::vector<std::vector<cv::Point> > contours;
-        cv::findContours(binImage, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-        // 検出された輪郭線の描画
-        for (std::vector<std::vector<cv::Point> >::iterator contour = contours.begin(); contour != contours.end(); contour++) {
-            cv::polylines(in_img, *contour, true, cv::Scalar(0, 255, 0), 2);
-        }
-
-        // 輪郭が四角形かの判定
-        for (std::vector<std::vector<cv::Point> >::iterator contour = contours.begin(); contour != contours.end(); contour++) {
-            // 輪郭を直線近似
-            std::vector<cv::Point> approx;
-            cv::approxPolyDP(cv::Mat(*contour), approx, 50.0, true);
-            // 近似が4線かつ面積が一定以上なら四角形
-            double area = cv::contourArea(approx);
-            cv::Rect rect = cv::boundingRect(approx);
-            cv::rectangle(in_img, cvPoint(rect.x, rect.y),
-                cvPoint(rect.x + rect.width, rect.y + rect.height), CV_RGB(255, 0, 0), 2);
-            this->detectUmbrella(rect);
-        }
-        cv::imshow("in_img", in_img);
-        cv::waitKey(1);
-        */
     }
 
 public:
