@@ -8,6 +8,8 @@
 #include "std_msgs/String.h"
 #include "jsk_2017_10_semi/umb_pos.h"
 #include <sstream>
+#include <iostream>
+#include <string>
 
 class UmbDetector
 {
@@ -22,7 +24,7 @@ private:
 
         cv::Mat result_img;
 
-        cv::matchTemplate(gray_img, tmp_img, result_img, CV_TM_CCORR_NORMED);
+        cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
 
         cv::Rect roi_rect(0, 0, tmp_img.cols, tmp_img.rows);
         cv::Point max_pt;
@@ -30,9 +32,18 @@ private:
         cv::minMaxLoc(result_img, NULL, &maxVal, NULL, &max_pt);
         roi_rect.x = max_pt.x;
         roi_rect.y = max_pt.y;
-        cv::rectangle(gray_img, roi_rect, cv::Scalar(0, 0, 255, 3));
 
-        cv::imshow("in_img", gray_img);
+        if (maxVal > match_coeff_thresh) {
+            cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+        } else {
+            cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
+        }
+
+        std::stringstream stream;
+        stream << maxVal;
+        cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
+
+        cv::imshow("in_img", in_img);
         cv::waitKey(1);
     }
 
@@ -45,7 +56,7 @@ public:
 
         chatter_pub = node_handle.advertise<jsk_2017_10_semi::umb_pos>("umb_pos", 1000);
 
-        tmp_img = cv::imread("/home/kogatti/semi_ws/src/jsk_demos/jsk_2017_10_semi/picture/umb_handle.png", CV_LOAD_IMAGE_GRAYSCALE);
+        tmp_img = cv::imread("/home/kogatti/semi_ws/src/jsk_demos/jsk_2017_10_semi/picture/umb_handle.png", 1);
         if (tmp_img.empty()){
             std::cout << "couldn't read the image. ./../picture/umb_handle.png" << std::endl;
             return;
@@ -93,6 +104,7 @@ private:
     double umb_length = 800.0;
     double ideal_height = 20.0;
     double ideal_dist = 1000.0;
+    double match_coeff_thresh = 0.65;
 };
 
 int main(int argc, char** argv)
