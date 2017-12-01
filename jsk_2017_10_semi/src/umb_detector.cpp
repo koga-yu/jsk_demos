@@ -101,29 +101,27 @@ public:
     {
         cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
 
-        cv::Rect roi_rect(0, 0, tmp_img.cols, tmp_img.rows);
-        cv::Point max_pt;
-        double max_val;
-        cv::minMaxLoc(result_img, NULL, &max_val, NULL, &max_pt);
-        roi_rect.x = max_pt.x;
-        roi_rect.y = max_pt.y;
-
-        if (max_val > match_coeff_thresh) {
-            //add rectangle RED
-            cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
-        } else {
-            //add rectangle BLUE
-            cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
-        }
         std::stringstream stream;
         stream << max_val;
 
         cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
-        cv::circle(in_img,
-            cv::Point{max_pt.x + tmp_img.cols / 2.0, max_pt.y + tmp_img.rows / 2.0},
-            3, cv::Scalar(200, 200, 200, 3));
 
         return UmbCandidate{max_pt.x + tmp_img.cols / 2.0, max_pt.y + tmp_img.rows / 2.0, size, max_val};
+    }
+
+    void drawDetectedUmb(cv::Mat& in_img, UmbCandidate& umb_candidate)
+    {
+        double size = umb_candidate.size;
+        cv::Rect roi_rect(0, 0, tmp_img.cols * size, tmp_img.rows * size);
+        roi_rect.x = umb_candidate.center_x;
+        roi_rect.y = umb_candidate.center_y;
+
+        cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+
+        std::stringstream stream;
+        stream << umb_candidate.coeff;
+
+        cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
     }
 
 private:
