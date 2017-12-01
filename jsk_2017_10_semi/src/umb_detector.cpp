@@ -118,7 +118,11 @@ public:
         roi_rect.x = umb_candidate.center_x;
         roi_rect.y = umb_candidate.center_y;
 
-        cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+        if (umb_candidate.coeff > this->match_coeff_thresh) {
+            cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+        } else {
+            cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
+        }
 
         std::stringstream stream;
         stream << umb_candidate.coeff;
