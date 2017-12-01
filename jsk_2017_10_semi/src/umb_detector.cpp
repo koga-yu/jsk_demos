@@ -101,18 +101,20 @@ public:
     {
         cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
 
-        std::stringstream stream;
-        stream << max_val;
+        cv::Point max_pt;
+        double max_val;
+        cv::minMaxLoc(result_img, NULL, &max_val, NULL, &max_pt);
 
-        cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
-
-        return UmbCandidate{max_pt.x + tmp_img.cols / 2.0, max_pt.y + tmp_img.rows / 2.0, size, max_val};
+        return UmbCandidate{max_pt.x + tmp_img.cols * size / 2.0,
+            max_pt.y + tmp_img.rows * size / 2.0,
+            size, max_val};
     }
 
     void drawDetectedUmb(cv::Mat& in_img, UmbCandidate& umb_candidate)
     {
         double size = umb_candidate.size;
         cv::Rect roi_rect(0, 0, tmp_img.cols * size, tmp_img.rows * size);
+        cv::Point max_pt(umb_candidate.center_x, umb_candidate.center_y);
         roi_rect.x = umb_candidate.center_x;
         roi_rect.y = umb_candidate.center_y;
 
