@@ -11,6 +11,13 @@
 #include <iostream>
 #include <string>
 
+typedef struct UmbCandidate {
+    double center_x;
+    double center_y;
+    double size;
+    double coeff;
+} UmbCandidate;
+
 class UmbDetector
 {
 private:
@@ -19,31 +26,46 @@ private:
         ROS_INFO("Received image");
         cv::Mat in_img = cv_bridge::toCvCopy(msg, msg->encoding)->image;
 
-        cv::Mat gray_img;
-        cv::cvtColor(in_img, gray_img, CV_BGR2GRAY);
+        int tmp_num = 0;
+        UmbCandidate tmp_umbcandidate;
+        UmbCandidate tmp_umbcandidate_down;
+        UmbCandidate tmp_umbcandidate_up;
 
-        cv::Mat result_img;
-
-        cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
-
-        cv::Rect roi_rect(0, 0, tmp_img.cols, tmp_img.rows);
-        cv::Point max_pt;
-        double maxVal;
-        cv::minMaxLoc(result_img, NULL, &maxVal, NULL, &max_pt);
-        roi_rect.x = max_pt.x;
-        roi_rect.y = max_pt.y;
-
-        if (maxVal > match_coeff_thresh) {
-            //add rectangle RED
-            cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
-        } else {
-            //add rectangle BLUE
-            cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
+        for (int i = 0; i < 5; i++) {
+            tmp_umbcandidate_up
+                = this->calcUmbCandidate(in_img, 1.0 + static_cast<double>(i) * 0.1);
+            if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
+                tmp_umbcandidate = tmp_umbcandidate_up;
+            }
         }
+        if (tmp_umbcandidate.coeff > match_coeff_thresh) {
+            double size = tmp_umbcandidate.size;
+            int cnt = 0;
+            while (true) {
+                cnt++;
+                if (cnt > this->search_cnt_max) {
+                    break;
+                }
 
-        std::stringstream stream;
-        stream << maxVal;
-        cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
+                tmp_umbcandidate_up
+                    = this->calcUmbCandidate(in_img, size + this->search_size_width);
+                tmp_umbcandidate_down
+                    = this->calcUmbCandidate(in_img, size - this->search_size_width);
+
+                if (tmp_umbcandidate.coeff > tmp_umbcandidate_up.coeff
+                    and tmp_umbcandidate.coeff > tmp_umbcandidate_down.coeff) {
+                    break;
+                } else if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff
+                           and tmp_umbcandidate_down.coeff < tmp_umbcandidate.coeff) {
+                    size += this->search_size_width;
+                } else {
+                    size -= this->search_size_width;
+                }
+            }
+
+            double real_dist = this->ideal_dist * size;
+            this->publishDetectUmb(real_dist, tmp_umbcandidate.center_x * this->ideal_y_ratio * size, this->ideal_height);
+        }
 
         cv::imshow("in_img", in_img);
         cv::waitKey(1);
@@ -59,7 +81,7 @@ public:
         chatter_pub = node_handle.advertise<jsk_2017_10_semi::umb_pos>("umb_pos", 1000);
 
         tmp_img = cv::imread("/home/kogatti/semi_ws/src/jsk_demos/jsk_2017_10_semi/picture/umb_handle.png", 1);
-        if (tmp_img.empty()){
+        if (tmp_img.empty()) {
             std::cout << "couldn't read the image. ./../picture/umb_handle.png" << std::endl;
             return;
         }
@@ -75,18 +97,51 @@ public:
         chatter_pub.publish(msg);
     }
 
+    UmbCandidate calcUmbCandidate(cv::Mat& in_img, double size)
+    {
+        cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
+
+        cv::Rect roi_rect(0, 0, tmp_img.cols, tmp_img.rows);
+        cv::Point max_pt;
+        double max_val;
+        cv::minMaxLoc(result_img, NULL, &max_val, NULL, &max_pt);
+        roi_rect.x = max_pt.x;
+        roi_rect.y = max_pt.y;
+
+        if (max_val > match_coeff_thresh) {
+            //add rectangle RED
+            cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
+        } else {
+            //add rectangle BLUE
+            cv::rectangle(in_img, roi_rect, cv::Scalar(255, 0, 0, 3));
+        }
+        std::stringstream stream;
+        stream << max_val;
+
+        cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
+        cv::circle(in_img,
+            cv::Point{max_pt.x + tmp_img.cols / 2.0, max_pt.y + tmp_img.rows / 2.0},
+            3, cv::Scalar(200, 200, 200, 3));
+
+        return UmbCandidate{max_pt.x + tmp_img.cols / 2.0, max_pt.y + tmp_img.rows / 2.0, size, max_val};
+    }
+
 private:
     image_transport::Subscriber img_sub_;
     image_transport::ImageTransport it_;
     ros::NodeHandle node_handle;
     ros::Publisher chatter_pub;
 
+    cv::Mat result_img;
     cv::Mat tmp_img;
 
     double umb_length = 800.0;
     double ideal_height = 20.0;
     double ideal_dist = 1000.0;
+    double ideal_y_ratio = 100.0;
     double match_coeff_thresh = 0.65;
+    double search_size_width = 0.02;
+    int search_cnt_max = 10;
 };
 
 int main(int argc, char** argv)
