@@ -38,39 +38,14 @@ private:
             if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
-            this->drawDetectedUmb(in_img, tmp_umbcandidate_up);
         }
-        double real_dist = this->ideal_dist * tmp_umbcandidate.size;
-        this->publishDetectUmb(real_dist,
-            tmp_umbcandidate.center_x * this->ideal_y_ratio *  tmp_umbcandidate.size,
-            this->ideal_height);
-        if (tmp_umbcandidate.coeff > match_coeff_thresh) {
-            double size = tmp_umbcandidate.size;
-            int cnt = 0;
-            while (true) {
-                cnt++;
-                if (cnt > this->search_cnt_max) {
-                    break;
-                }
-
-                tmp_umbcandidate_up
-                    = this->calcUmbCandidate(in_img, size + this->search_size_width);
-                tmp_umbcandidate_down
-                    = this->calcUmbCandidate(in_img, size - this->search_size_width);
-
-                if (tmp_umbcandidate.coeff > tmp_umbcandidate_up.coeff
-                    and tmp_umbcandidate.coeff > tmp_umbcandidate_down.coeff) {
-                    break;
-                } else if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff
-                           and tmp_umbcandidate_down.coeff < tmp_umbcandidate.coeff) {
-                    size += this->search_size_width;
-                } else {
-                    size -= this->search_size_width;
-                }
-            }
-
+        this->drawDetectedUmb(in_img, tmp_umbcandidate);
+        if (tmp_umbcandidate.coeff > this->match_coeff_thresh) {
+            double real_dist = this->ideal_dist / tmp_umbcandidate.size;
+            this->publishDetectUmb(real_dist,
+                (tmp_umbcandidate.center_x - in_img.cols / 2.0) * this->ideal_y_ratio / tmp_umbcandidate.size,
+                this->ideal_height);
         }
-
         cv::imshow("in_img", in_img);
         cv::waitKey(1);
     }
@@ -121,9 +96,10 @@ public:
     {
         double size = umb_candidate.size;
         cv::Rect roi_rect(0, 0, tmp_img.cols * size, tmp_img.rows * size);
-        cv::Point max_pt(umb_candidate.center_x, umb_candidate.center_y);
-        roi_rect.x = umb_candidate.center_x;
-        roi_rect.y = umb_candidate.center_y;
+        cv::Point max_pt(umb_candidate.center_x - tmp_img.cols * size / 2.0,
+            umb_candidate.center_y - tmp_img.rows * size / 2.0);
+        roi_rect.x = umb_candidate.center_x - tmp_img.cols * size / 2.0;
+        roi_rect.y = umb_candidate.center_y - tmp_img.rows * size / 2.0;
 
         if (umb_candidate.coeff > this->match_coeff_thresh) {
             cv::rectangle(in_img, roi_rect, cv::Scalar(0, 0, 255, 3));
@@ -132,7 +108,7 @@ public:
         }
 
         std::stringstream stream;
-        stream << umb_candidate.coeff;
+        stream << umb_candidate.size << " " << umb_candidate.coeff;
 
         cv::putText(in_img, stream.str(), max_pt, 1, 3.0, cv::Scalar(100, 255, 255, 3));
     }
@@ -147,9 +123,9 @@ private:
     cv::Mat tmp_img;
 
     double umb_length = 800.0;
-    double ideal_height = 20.0;
-    double ideal_dist = 1000.0;
-    double ideal_y_ratio = 100.0;
+    double ideal_height = 750.0;
+    double ideal_dist = 750.0;
+    double ideal_y_ratio = -200.0 / (305.5 - 196.5);
     double match_coeff_thresh = 0.65;
     double search_size_width = 0.02;
     int search_cnt_max = 10;
