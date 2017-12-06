@@ -28,15 +28,17 @@ private:
 
         int tmp_num = 0;
         UmbCandidate tmp_umbcandidate;
+        tmp_umbcandidate.coeff = 0;
         UmbCandidate tmp_umbcandidate_down;
         UmbCandidate tmp_umbcandidate_up;
 
         for (int i = 0; i < 5; i++) {
             tmp_umbcandidate_up
-                = this->calcUmbCandidate(in_img, 1.0 + static_cast<double>(i) * 0.1);
+                = this->calcUmbCandidate(in_img, 1.0 - static_cast<double>(i) * 0.2);
             if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
+            this->drawDetectedUmb(in_img, tmp_umbcandidate_up);
         }
         if (tmp_umbcandidate.coeff > match_coeff_thresh) {
             double size = tmp_umbcandidate.size;
@@ -99,14 +101,16 @@ public:
 
     UmbCandidate calcUmbCandidate(cv::Mat& in_img, double size)
     {
-        cv::matchTemplate(in_img, tmp_img, result_img, CV_TM_CCOEFF_NORMED);
+        cv::Mat tmp_img_resized;
+        cv::resize(tmp_img, tmp_img_resized, cv::Size(), size, size);
+        cv::matchTemplate(in_img, tmp_img_resized, result_img, CV_TM_CCOEFF_NORMED);
 
         cv::Point max_pt;
         double max_val;
         cv::minMaxLoc(result_img, NULL, &max_val, NULL, &max_pt);
 
-        return UmbCandidate{max_pt.x + tmp_img.cols * size / 2.0,
-            max_pt.y + tmp_img.rows * size / 2.0,
+        return UmbCandidate{max_pt.x + tmp_img_resized.cols * size / 2.0,
+            max_pt.y + tmp_img_resized.rows * size / 2.0,
             size, max_val};
     }
 
