@@ -43,7 +43,8 @@ private:
         if (tmp_umbcandidate.coeff > this->match_coeff_thresh) {
             double real_dist = this->ideal_dist / tmp_umbcandidate.size;
             this->publishDetectUmb(real_dist,
-                (tmp_umbcandidate.center_x - in_img.cols / 2.0) * this->ideal_y_ratio / tmp_umbcandidate.size,
+                (tmp_umbcandidate.center_x + tmp_umbcandidate.size * tmp_img.rows * 0.2 - in_img.cols / 2.0)
+                    * this->ideal_y_ratio / tmp_umbcandidate.size,
                 this->ideal_height);
         }
         cv::imshow("in_img", in_img);
