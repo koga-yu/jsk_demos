@@ -1,7 +1,28 @@
-#!/bin/usr/env roseus
+#!/usr/bin/env roseus
 
 (load "package://fetcheus/fetch-interface.l")
+
+(ros::roseus "catch_umb")
 (fetch-init)
+
+(ros::load-ros-manifest "jsk_2017_10_semi")
+
+(defvar detected_umb_pos_x 0)
+(defvar detected_umb_pos_y 0)
+(defvar detected_umb_pos_z 0)
+
+;;define /umb_pos subscriber
+(defun umb-pos-sub (msg)
+    (setq detected_umb_pos_x (send msg :x))
+    (setq detected_umb_pos_y (send msg :y))
+    (setq detected_umb_pos_z (send msg :z))
+    (ros::ros-info (format nil "~A ~A ~A~%" (send msg :x) (send msg :y) (send msg :z)))
+    (terpri)
+)
+
+(ros::subscribe "/detected_umb_pos"
+    jsk_2017_10_semi::umb_pos
+    #'umb-pos-sub 1)
 
 (load "make_models.l")
 (setq umb (instance bodyset-link :init (make-cascoords) :bodies (list (make-umb))))

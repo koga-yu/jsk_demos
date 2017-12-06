@@ -34,12 +34,16 @@ private:
 
         for (int i = 0; i < 5; i++) {
             tmp_umbcandidate_up
-                = this->calcUmbCandidate(in_img, 1.0 - static_cast<double>(i) * 0.2);
+                = this->calcUmbCandidate(in_img, 1.0 - static_cast<double>(i) * 0.1);
             if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
             this->drawDetectedUmb(in_img, tmp_umbcandidate_up);
         }
+        double real_dist = this->ideal_dist * tmp_umbcandidate.size;
+        this->publishDetectUmb(real_dist,
+            tmp_umbcandidate.center_x * this->ideal_y_ratio *  tmp_umbcandidate.size,
+            this->ideal_height);
         if (tmp_umbcandidate.coeff > match_coeff_thresh) {
             double size = tmp_umbcandidate.size;
             int cnt = 0;
@@ -65,8 +69,6 @@ private:
                 }
             }
 
-            double real_dist = this->ideal_dist * size;
-            this->publishDetectUmb(real_dist, tmp_umbcandidate.center_x * this->ideal_y_ratio * size, this->ideal_height);
         }
 
         cv::imshow("in_img", in_img);
@@ -80,13 +82,14 @@ public:
         img_sub_ = it_.subscribe("image", 3, &UmbDetector::imageCallBack, this);
         cv::namedWindow("Fast", 1);
 
-        chatter_pub = node_handle.advertise<jsk_2017_10_semi::umb_pos>("umb_pos", 1000);
+        chatter_pub = node_handle.advertise<jsk_2017_10_semi::umb_pos>("detected_umb_pos", 1000);
 
         tmp_img = cv::imread("/home/kogatti/semi_ws/src/jsk_demos/jsk_2017_10_semi/picture/umb_handle.png", 1);
         if (tmp_img.empty()) {
             std::cout << "couldn't read the image. ./../picture/umb_handle.png" << std::endl;
             return;
         }
+        cv::imshow("tmp_img", tmp_img);
     }
 
     void publishDetectUmb(float x, float y, float z) const
