@@ -29,12 +29,18 @@ private:
         int tmp_num = 0;
         UmbCandidate tmp_umbcandidate;
         tmp_umbcandidate.coeff = 0;
-        UmbCandidate tmp_umbcandidate_down;
         UmbCandidate tmp_umbcandidate_up;
 
         for (int i = 0; i < 5; i++) {
             tmp_umbcandidate_up
                 = this->calcUmbCandidate(in_img, 1.0 - static_cast<double>(i) * 0.1);
+            if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
+                tmp_umbcandidate = tmp_umbcandidate_up;
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            tmp_umbcandidate_up
+                = this->calcUmbCandidate(in_img, tmp_umbcandidate.size - 0.1 + 0.01 * static_cast<double>(i));
             if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
