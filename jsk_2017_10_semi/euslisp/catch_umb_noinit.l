@@ -1,11 +1,4 @@
 #!/usr/bin/env roseus
-(print "loading fetch-interface")
-(load "package://fetcheus/fetch-interface.l")
-(print "load-ros-manifest jsk_2017_10_semi")
-(ros::load-ros-manifest "jsk_2017_10_semi")
-(print "fetch-init")
-(fetch-init)
-
 (load "package://jsk_maps/src/eng2-scene.l")
 (setq *scene* (make-eng2-scene))
 

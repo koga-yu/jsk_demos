@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 typedef struct UmbCandidate {
     double center_x;
@@ -48,10 +49,10 @@ private:
         this->drawDetectedUmb(in_img, tmp_umbcandidate);
         if (tmp_umbcandidate.coeff > this->match_coeff_thresh) {
             double real_dist = this->ideal_dist / tmp_umbcandidate.size;
-            this->publishDetectUmb(real_dist,
-                (tmp_umbcandidate.center_x + tmp_umbcandidate.size * tmp_img.rows * 0.2 - in_img.cols / 2.0)
-                    * this->ideal_y_ratio / tmp_umbcandidate.size,
-                this->ideal_height);
+            real_dist = std::sqrt(real_dist * real_dist - camera_hand_height_diff * camera_hand_height_diff);
+            double angle = -(tmp_umbcandidate.center_x - in_img.cols / 2.0) * ideal_angle_ratio / tmp_umbcandidate.size;
+            this->publishDetectUmb(real_dist * std::cos(angle), real_dist * 0.9 * std::sin(angle),
+                ideal_height);
         }
         cv::imshow("in_img", in_img);
         cv::waitKey(1);
@@ -130,11 +131,12 @@ private:
     cv::Mat tmp_img;
 
     double umb_length = 800.0;
-    double ideal_height = 750.0;
+    double ideal_height = 730.0;
     double ideal_dist = 750.0;
-    double ideal_y_ratio = -200.0 / (305.5 - 196.5);
+    double ideal_angle_ratio = std::atan2(120.0, ideal_dist) / 95.0;
     double match_coeff_thresh = 0.65;
     double search_size_width = 0.02;
+    double camera_hand_height_diff = 300.0;
     int search_cnt_max = 10;
 };
 
