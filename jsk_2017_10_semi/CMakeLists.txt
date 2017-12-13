@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pr2eus
   message_generation
 )
-
+find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -123,10 +123,11 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 add_executable(umb_detector src/umb_detector.cpp)
-target_link_libraries(umb_detector ${catkin_LIBRARIES})
+target_link_libraries(umb_detector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
