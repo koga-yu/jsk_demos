@@ -49,6 +49,8 @@
 ;only move after merged "enable to run go-grasp on kinematic simulation mode "
 (send *ri* :stop-grasp)
 
+(print "move to near")
+
 (setq inv-success
     (send *fetch* :rarm :inverse-kinematics
         (make-coords :pos (float-vector (- detected_umb_pos_x 200) detected_umb_pos_y detected_umb_pos_z))
@@ -59,57 +61,39 @@
 
 (do-until-key ())
 
+(print "move to catch")
+
 (send *fetch* :rarm :inverse-kinematics
-    (make-coords :pos (float-vector (- detected_umb_pos_x 60) detected_umb_pos_y detected_umb_pos_z))
+    (make-coords :pos (float-vector (- detected_umb_pos_x 0) detected_umb_pos_y detected_umb_pos_z))
 )
 (send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
 (send *ri* :wait-interpolation)
 
 (do-until-key ())
+
+(print "catch")
 
 (send *fetch* :rarm :end-coords :assoc umb)
 (send *ri* :start-grasp)
 (send *fetch* :rarm :inverse-kinematics
-    (make-coords :pos (float-vector (- detected_umb_pos_x 60) detected_umb_pos_y detected_umb_pos_z))
+    (make-coords :pos (float-vector (- detected_umb_pos_x 0) detected_umb_pos_y detected_umb_pos_z))
 )
 (send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
 (send *ri* :wait-interpolation)
 
-(do-until-key ())
+;(do-until-key ())
 
-(setq inv-success
-    (send *fetch* :rarm :inverse-kinematics
-        (make-coords :pos (float-vector (- detected_umb_pos_x 80) detected_umb_pos_y (+ detected_umb_pos_z 50)))
-    )
-)
-(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
-(send *ri* :wait-interpolation)
-
-(do-until-key ())
-
-(setq inv-success
-    (send *fetch* :rarm :inverse-kinematics
-        (make-coords :pos (float-vector 300 -200 1300))
-    )
-)
-(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
-(send *ri* :wait-interpolation)
-
-(do-until-key ())
-(send *ri* :move-to (send *scene* :spot "/eng2/7f/room73B2-door-front"))
+;(setq inv-success
+;    (send *fetch* :rarm :inverse-kinematics
+;        (make-coords :pos (float-vector (- detected_umb_pos_x 80) detected_umb_pos_y (+ detected_umb_pos_z 50)))
+;    )
+;)
+;(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
+;(send *ri* :wait-interpolation)
 
 (do-until-key ())
 
-(setq inv-success
-    (send *fetch* :rarm :inverse-kinematics
-        (make-coords :pos (float-vector 700 0 1400))
-    )
-)
-(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
-(send *ri* :wait-interpolation)
-
-(do-until-key ())
-
+(print "move to mid pos")
 (setq inv-success
     (send *fetch* :rarm :inverse-kinematics
         (make-coords :pos (float-vector 700 0 900))
@@ -120,8 +104,64 @@
 
 (do-until-key ())
 
+(print "bring up")
+(print (list "before ik " (send *fetch* :angle-vector)))
+(setq inv-success
+    (send *fetch* :rarm :inverse-kinematics
+        (make-coords :pos (float-vector 300 300 1300))
+         :thre 200 :rthre 0.3
+    )
+)
+(print (list "go to" (send *fetch* :angle-vector)))
+(while (null (send *ri* :angle-vector (send *fetch* :angle-vector) 5000))
+    (unix:sleep 1)
+    (print "retry...")
+    )
+(send *ri* :wait-interpolation)
+
+(do-until-key ())
+(print "go to door-front")
+(send *ri* :go-pos 0 0 -90 )
+
+(do-until-key ())
+
+(print "bring up to put in stand")
+(setq inv-success
+    (send *fetch* :rarm :inverse-kinematics
+        (make-coords :pos (float-vector 800 0 1400) :thre 300)
+         :thre 300 :rthre 0.3
+    )
+)
+(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
+(send *ri* :wait-interpolation)
+
+(do-until-key ())
+
+(print "put in stand")
+(setq inv-success
+    (send *fetch* :rarm :inverse-kinematics
+        (make-coords :pos (float-vector 800 0 800) :thre 300)
+    )
+)
+(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
+(send *ri* :wait-interpolation)
+
+(do-until-key ())
+
+(print "stop grasp")
 (send *ri* :stop-grasp)
 
+(do-until-key ())
+
+(print "put in stand")
+(setq inv-success
+    (send *fetch* :rarm :inverse-kinematics
+        (make-coords :pos (float-vector 700 0 800) :thre 300)
+    )
+)
+(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
+(send *ri* :wait-interpolation)
+(print "finished")
 ;(send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(900 0 1200)))
 ;(send *ri* :angle-vector (send *fetch* :angle-vector) 5000)
 ;(send *ri* :wait-interpolation)
@@ -136,7 +176,7 @@
 ;(send *ri* :stop-grasp)
 ;(send *fetch* :rarm :end-coords :dissoc umb)
 
-(unix:sleep 1)
+;(unix:sleep 1)
 
 ;(send *fetch* :rarm :inverse-kinematics (make-coords :pos #f(900 0 900)))
 ;(send *ri* :angle-vector (send *fetch* :angle-vector) 3000)

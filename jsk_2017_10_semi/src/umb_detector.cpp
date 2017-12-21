@@ -39,9 +39,18 @@ private:
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
         }
+        double tmp_max_size = tmp_umbcandidate.size;
         for (int i = 0; i < 10; i++) {
             tmp_umbcandidate_up
-                = this->calcUmbCandidate(in_img, tmp_umbcandidate.size - 0.1 + 0.01 * static_cast<double>(i));
+                = this->calcUmbCandidate(in_img, tmp_max_size - 0.1 + 0.01 * static_cast<double>(i));
+            if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
+                tmp_umbcandidate = tmp_umbcandidate_up;
+            }
+        }
+        tmp_max_size = tmp_umbcandidate.size;
+        for (int i = 0; i < 10; i++) {
+            tmp_umbcandidate_up
+                = this->calcUmbCandidate(in_img, tmp_max_size - 0.01 + 0.001 * static_cast<double>(i));
             if (tmp_umbcandidate_up.coeff > tmp_umbcandidate.coeff) {
                 tmp_umbcandidate = tmp_umbcandidate_up;
             }
@@ -131,7 +140,7 @@ private:
     cv::Mat tmp_img;
 
     double umb_length = 800.0;
-    double ideal_height = 730.0;
+    double ideal_height = 700.0;
     double ideal_dist = 750.0;
     double ideal_angle_ratio = std::atan2(120.0, ideal_dist) / 95.0;
     double match_coeff_thresh = 0.65;
